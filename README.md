@@ -1,5 +1,6 @@
 # bayNormJL.jl: bayNorm in Julia
-bayNorm in Julia, super fast! The R package can be found here (more detailed about parameter setting): `https://github.com/WT215/bayNorm`.
+bayNorm in Julia, super fast! The R package can be found here (more detailed about parameter setting): https://github.com/WT215/bayNorm](https://github.com/WT215/bayNorm).
+
 
 bayNormJL is a Julia package which is used to normalize single-cell RNA-seq data. 
 
