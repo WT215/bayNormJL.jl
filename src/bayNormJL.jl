@@ -1,6 +1,7 @@
 module bayNormJL
 
     using Distributed
+    using StatsBase
     using ProgressMeter
     using DataFrames
     using GLM
