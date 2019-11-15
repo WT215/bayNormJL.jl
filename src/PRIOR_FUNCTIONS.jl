@@ -54,7 +54,18 @@ end
 function AdjustSIZE_fun(;BB_SIZE, MME_MU, MME_SIZE)
 
     
-    fitind = findall((BB_SIZE .< maximum(BB_SIZE)*0.8) .* (BB_SIZE .> minimum(BB_SIZE)))
+    #fitind = findall((BB_SIZE .< maximum(BB_SIZE)*0.8) .* (BB_SIZE .> minimum(BB_SIZE)))
+    if mode(round.(BB_SIZE,digits=2)) == maximum(round.(BB_SIZE,digits=2))
+        show("New way for adjusting MME SIZE")
+        fitind_1 = findall(round.(BB_SIZE,digits=2) .!= mode(round.(BB_SIZE,digits=2)))
+        fitind_2 = findall(round.(MME_SIZE,digits=2) .!= minimum(round.(MME_SIZE,digits=2)))
+
+        fitind=intersect(fitind_1,fitind_2)
+    else
+        fitind_1 = findall((BB_SIZE .< maximum(BB_SIZE)*0.8) .* (BB_SIZE .> minimum(BB_SIZE)))
+        fitind_2 = findall(round.(MME_SIZE,digits=2) .== minimum(round.(MME_SIZE,digits=2)))
+        fitind=intersect(fitind_1,fitind_2)
+    end
 
 
     #lmfit = lm(log.(BB_SIZE)[fitind] ~ log.(MME_SIZE)[fitind])
@@ -149,7 +160,9 @@ function BB_Fun(;Data, BETA_vec, INITIAL_MU_vec, INITIAL_SIZE_vec, MU_lower = 0.
                     # inner_optimizer =  LBFGS()
                     # res_m =optimize(temp_fun,temp_fun_g!,[SIZE_lower],[SIZE_upper],[input_mme_size], Fminbox(inner_optimizer))
 
-                    res = bboptimize(temp_fun; SearchRange = [(SIZE_lower, SIZE_upper)], NumDimensions = 1,Method= :xnes,MaxFuncEvals=1000,TraceMode=:silent);
+                    res = bboptimize(temp_fun; SearchRange = [(SIZE_lower, SIZE_upper)], NumDimensions = 1,Method= :xnes,MaxFuncEvals=500,TraceMode=:silent);
+                    #res_2 = bboptimize(temp_fun; SearchRange = [(SIZE_lower, SIZE_upper)], NumDimensions = 1,Method= :adaptive_de_rand_1_bin_radiuslimited,MaxFuncEvals=500,TraceMode=:silent);
+                    
 
 
                     #mean([SIZE_upper,SIZE_lower])
@@ -157,10 +170,18 @@ function BB_Fun(;Data, BETA_vec, INITIAL_MU_vec, INITIAL_SIZE_vec, MU_lower = 0.
               
                     #rr_val=res_m.minimizer[1]
                     rr_val=best_candidate(res)[1];
+
+                    # if (best_fitness(res)<=temp_fun(input_mme_size))
+                    #     QQ[gene_ind,:]=[rr_val,Priors[gene_ind,2]]
+                    # else 
+                    #     QQ[gene_ind,:]=[input_mme_size,Priors[gene_ind,2]]
+                    # end
+                    QQ[gene_ind,:]=[rr_val,Priors[gene_ind,2]]
+                    
                     
                     #res =optimize(SIZE -> MarginalF_NB_1D(SIZE,MU=input_mme, m_observed=input_obs,BETA=BETA_vec),SIZE -> GradientFun_NB_1D(SIZE,MU=input_mme, m_observed=input_obs,BETA=BETA_vec),[0.01],[100.], [Priors[gene_ind,1]], Fminbox(inner_optimizer))
                     
-                    QQ[gene_ind,:]=[rr_val,Priors[gene_ind,2]]
+                    
                     #[rr_val Priors[gene_ind,2]];
                     
                     put!(channel, true)
@@ -204,7 +225,7 @@ function BB_Fun(;Data, BETA_vec, INITIAL_MU_vec, INITIAL_SIZE_vec, MU_lower = 0.
                         # inner_optimizer =  LBFGS()
                         # res =optimize(temp_fun,temp_fun_g!,[SIZE_lower,MU_lower],[SIZE_upper,MU_upper], input_mme, Fminbox(inner_optimizer))
 
-                        res = bboptimize(temp_fun; SearchRange = [(SIZE_lower, SIZE_upper),(MU_lower, MU_upper)], NumDimensions = 2,Method= :xnes,MaxFuncEvals=1000,TraceMode=:silent);
+                        res = bboptimize(temp_fun; SearchRange = [(SIZE_lower, SIZE_upper),(MU_lower, MU_upper)], NumDimensions = 2,Method= :xnes,MaxFuncEvals=500,TraceMode=:silent);
                         #res =optimize(temp_fun,temp_fun_g!,[SIZE_lower,MU_lower],[SIZE_upper,MU_upper], [rand(dd_1,1)[1],rand(dd_2,1)[1]], Fminbox(inner_optimizer))
 
                         
@@ -248,9 +269,9 @@ function Prior_fun(;Data, BETA_vec, FIX_MU = true,BB_SIZE_par = true, verbose = 
 
     if BB_SIZE_par
         if verbose
-            show("Start optimization using spg from BB package. This part may be time-consuming.")
+            show("Start optimization using black box optimization method.")
         end
-        ooot=BB_Fun(Data=Data, BETA_vec=BETA_vec, INITIAL_MU_vec=Priors_MME[:,2], INITIAL_SIZE_vec=Priors_MME[:,1], MU_lower = minimum(M_ave_ori), MU_upper = maximum(M_ave_ori), SIZE_lower =minimum(size_est),SIZE_upper = maximum(size_est),FIX_MU = FIX_MU)
+        ooot=BB_Fun(Data=Data, BETA_vec=BETA_vec, INITIAL_MU_vec=Priors_MME[:,2], INITIAL_SIZE_vec=Priors_MME[:,1], MU_lower = minimum(M_ave_ori), MU_upper = maximum(M_ave_ori), SIZE_lower =minimum(size_est),SIZE_upper =maximum(size_est),FIX_MU = FIX_MU)
 
     end 
     #sum(ooot[:,1].<=0)
